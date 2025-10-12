@@ -1,0 +1,56 @@
+# A2A Protocol Endpoints - REST Client
+# Uses Azure Identity extension for VS Code to acquire tokens
+# Install extension: https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azureidentity
+
+# ========================================
+# CONFIGURATION VARIABLES
+# ========================================
+
+@logicAppUrl = https://your-logic-app.azurewebsites.net/api/Agents/your-agent
+@teamsAppClientId = 12345678-1234-1234-1234-123456789abc
+@tenantId = 87654321-4321-4321-4321-cba987654321
+@clientSecret = your-client-secret-here
+
+# @logicAppUrl = https://YOUR-LOGIC-APP.azurewebsites.net
+# @teamsAppClientId = YOUR-TEAMS-APP-CLIENT-ID
+# @tenantId = YOUR-TENANT-ID
+
+# Azure Identity extension will automatically acquire token for the specified scope
+# Scope format: api://{clientId}/access_as_user for Teams app
+@scope = api://12345678-1234-1234-1234-123456789abc/.default
+
+# Can be retrieved through az cli via:
+# ➜ az login --tenant {{tenantId}} --scope api://{{teamsAppClientId}}/user_impersonation
+# ➜ az account get-access-token --resource api://{{teamsAppClientId}} --query accessToken -o tsv                   
+# 
+
+# Alternative: Use Logic App's default scope if EasyAuth is configured
+# @scope = {{logicAppUrl}}/.default
+
+# ========================================
+# A2A PROTOCOL ENDPOINTS (JSON-RPC 2.0)
+# ========================================
+### OAuth 2.0 Client Credentials Flow (Confidential Client)
+# @name getConfidentialClientToken
+# For service-to-service authentication without user interaction
+# Requires: Application with client secret or certificate
+
+
+POST https://login.microsoftonline.com/{{tenantId}}/oauth2/v2.0/token HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+&client_id={{teamsAppClientId}}
+&client_secret={{clientSecret}}
+&scope={{scope}}
+
+###
+### Agent Discovery - Get Agent Card
+# @name getAgentCard
+# No authentication required for public agent card
+# For authenticated extended card, add Authorization header
+
+GET {{logicAppUrl}}/.well-known/agent-card.json
+Accept: application/json
+Authorization: Bearer {{getConfidentialClientToken.response.body.access_token}}
+
