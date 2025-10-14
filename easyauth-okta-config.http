@@ -1,0 +1,135 @@
+
+# Set the following variables before running:
+@oktaDomain = your-okta-domain (e.g., trial-4786599.okta.com)
+@oktaClientId = your_okta_client_id
+@subscriptionId = your_subscription_id
+@resourceGroupName = your_resource_group_name
+@siteName = your_logic_app_name
+# Get access token with: az account get-access-token --query accessToken -o tsv
+@accessToken = your_access_token_from_az_command
+
+
+PUT https://management.azure.com/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Web/sites/{{siteName}}/config/authsettingsV2?api-version=2024-11-01 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+    "id": "/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Web/sites/{{siteName}}/config/authsettingsV2",
+    "name": "authsettingsV2",
+    "type": "Microsoft.Web/sites/config",
+    "location": "Central US",
+    "tags": {},
+    "properties": {
+        "platform": {
+            "enabled": false,
+            "runtimeVersion": "~1"
+        },
+        "globalValidation": {
+            "requireAuthentication": true,
+            "unauthenticatedClientAction": "RedirectToLoginPage",
+            "redirectToProvider": "okta1test",
+            "excludedPaths": [
+                "/runtime/*"
+            ]
+        },
+        "identityProviders": {
+            "azureActiveDirectory": {
+                "enabled": true,
+                "registration": {},
+                "login": {
+                    "disableWWWAuthenticate": false
+                },
+                "validation": {
+                    "jwtClaimChecks": {},
+                    "defaultAuthorizationPolicy": {
+                        "allowedPrincipals": {}
+                    }
+                }
+            },
+            "facebook": {
+                "enabled": true,
+                "registration": {},
+                "login": {}
+            },
+            "gitHub": {
+                "enabled": true,
+                "registration": {},
+                "login": {}
+            },
+            "google": {
+                "enabled": true,
+                "registration": {},
+                "login": {},
+                "validation": {}
+            },
+            "twitter": {
+                "enabled": true,
+                "registration": {}
+            },
+            "customOpenIdConnectProviders": {
+                "okta1test": {
+                    "registration": {
+                        "clientId": "{{oktaClientId}}",
+                        "clientCredential": {
+                            "clientSecretSettingName": "OKTA_CLIENT_SECRET"
+                        },
+                        "openIdConnectConfiguration": {
+                            "authorizationEndpoint": "https://{{oktaDomain}}/oauth2/v1/authorize",
+                            "tokenEndpoint": "https://{{oktaDomain}}/oauth2/v1/token",
+                            "issuer": "https://{{oktaDomain}}",
+                            "certificationUri": "https://{{oktaDomain}}/oauth2/v1/keys"
+                        }
+                    },
+                    "login": {
+                        "nameClaimType": "sub",
+                        "scopes": [
+                            "openid",
+                            "profile",
+                            "email"
+                        ]
+                    }
+                }
+            },
+            "legacyMicrosoftAccount": {
+                "enabled": true,
+                "registration": {},
+                "login": {},
+                "validation": {}
+            },
+            "apple": {
+                "enabled": true,
+                "registration": {},
+                "login": {}
+            }
+        },
+        "login": {
+            "routes": {},
+            "tokenStore": {
+                "enabled": true,
+                "tokenRefreshExtensionHours": 72.0,
+                "fileSystem": {},
+                "azureBlobStorage": {}
+            },
+            "preserveUrlFragmentsForLogins": false,
+            "cookieExpiration": {
+                "convention": "FixedTime",
+                "timeToExpiration": "08:00:00"
+            },
+            "nonce": {
+                "validateNonce": true,
+                "nonceExpirationInterval": "00:05:00"
+            }
+        },
+        "httpSettings": {
+            "requireHttps": true,
+            "routes": {
+                "apiPrefix": "/.auth"
+            },
+            "forwardProxy": {
+                "convention": "NoProxy"
+            }
+        },
+        "clearInboundClaimsMapping": "false"
+    }
+}
+###
